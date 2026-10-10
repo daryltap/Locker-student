@@ -7,7 +7,12 @@ function db(): PDO
     if ($pdo instanceof PDO) {
         return $pdo;
     }
-    $path = getenv("DATABASE_PATH") ?: (dirname(__DIR__) . "/data/locker.db");
+    $path = getenv("DATABASE_PATH");
+    if (!$path) {
+        $path = getenv("VERCEL")
+            ? sys_get_temp_dir() . "/locker.db"
+            : (dirname(__DIR__) . "/data/locker.db");
+    }
     if (!is_dir(dirname($path))) {
         mkdir(dirname($path), 0777, true);
     }
