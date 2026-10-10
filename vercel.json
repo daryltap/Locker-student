@@ -6,7 +6,8 @@
   },
   "routes": [
     {
-      "handle": "filesystem"
+      "src": "/styles.css",
+      "dest": "/public/styles.css"
     },
     {
       "src": "/(.*)",
