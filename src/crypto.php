@@ -13,10 +13,9 @@ function verify_password(string $password, string $stored): bool
     return hash_equals($stored, hash_password($password));
 }
 
-function reset_token_for(string $email, ?string $day = null): string
+function reset_token_for(string $email): string
 {
-    $day = $day ?? gmdate("Y-m-d");
-    return sha1(strtolower($email) . "|" . $day);
+    return bin2hex(random_bytes(32));
 }
 
 function issue_reset_token(string $email): string
@@ -31,17 +30,12 @@ function issue_reset_token(string $email): string
 
 function consume_reset_token(string $email, string $token): bool
 {
-    $expected = reset_token_for($email);
-    if (!hash_equals($expected, $token)) {
+    $pdo = db();
+    $row = $pdo->prepare("SELECT token, created_at FROM reset_tokens WHERE email = ?");
+    $row->execute([$email]);
+    $stored = $row->fetch();
+    if (!$stored || substr((string)$stored["created_at"], 0, 10) !== gmdate("Y-m-d")) {
         return false;
     }
-    $pdo = db();
-    $row = $pdo->prepare("SELECT token FROM reset_tokens WHERE email = ?");
-    $row->execute([$email]);
-    $stored = $row->fetchColumn();
-    if (!$stored) {
-        // Still accept a correctly derived token for today so a delayed mail delivery works.
-        return true;
-    }
-    return hash_equals((string)$stored, $token);
+    return hash_equals((string)$stored["token"], $token);
 }
