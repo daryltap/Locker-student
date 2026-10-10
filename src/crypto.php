@@ -15,6 +15,7 @@ function verify_password(string $password, string $stored): bool
 
 function reset_token_for(string $email): string
 {
+    //The token is now a random 32-byte hex string rather than an SHA-1 string
     return bin2hex(random_bytes(32));
 }
 
@@ -34,6 +35,7 @@ function consume_reset_token(string $email, string $token): bool
     $row = $pdo->prepare("SELECT token, created_at FROM reset_tokens WHERE email = ?");
     $row->execute([$email]);
     $stored = $row->fetch();
+    //This checks that the token exists and was created on todays date
     if (!$stored || substr((string)$stored["created_at"], 0, 10) !== gmdate("Y-m-d")) {
         return false;
     }
